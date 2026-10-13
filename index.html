@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overlay test</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; color: #F7F6F2; }
+  body.debug {
+    background-color: #C9C8C1;
+    background-image: linear-gradient(45deg, #8E8D87 25%, transparent 25%), linear-gradient(-45deg, #8E8D87 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #8E8D87 75%), linear-gradient(-45deg, transparent 75%, #8E8D87 75%);
+    background-size: 40px 40px; background-position: 0 0, 0 20px, 20px -20px, -20px 0;
+  }
+
+  .badge {
+    position: absolute; top: 3vmin; right: 3vmin;
+    display: flex; align-items: center; gap: 1.2vmin;
+    background: rgba(14,14,16,0.9); border: 1px solid #3A3A43; border-radius: 999px;
+    padding: 1.2vmin 2.4vmin; font-size: 2.6vmin; font-weight: 600;
+  }
+  .dot { width: 1.4vmin; height: 1.4vmin; border-radius: 50%; background: #FF3B3B; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+
+  .card {
+    position: absolute; left: 3vmin; bottom: 12vmin;
+    display: flex; align-items: center; gap: 2.4vmin;
+    padding: 2vmin 3.2vmin 2vmin 2vmin; max-width: 70vw; box-sizing: border-box;
+    background: rgba(14,14,16,0.95); border: 0.5vmin solid #FF3B3B; border-radius: 3vmin;
+    transform: translateX(-120%); transition: transform 0.6s cubic-bezier(.2,.8,.2,1);
+  }
+  .card.show { transform: translateX(0); }
+  .thumb {
+    width: 14vmin; height: 14vmin; border-radius: 2vmin; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 4.5vmin; color: #F7F6F2;
+  }
+  .info { display: flex; flex-direction: column; gap: 0.8vmin; min-width: 0; }
+  .label { font-size: 2vmin; font-weight: 800; letter-spacing: 0.12em; color: #FF3B3B; }
+  .name { font-size: 4.4vmin; font-weight: 800; line-height: 1.1; }
+  .price { font-size: 3.4vmin; font-family: ui-monospace, Menlo, monospace; }
+  .stock { font-size: 2.2vmin; color: #C9C8C1; }
+
+  .ticker {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 7.5vmin;
+    background: #F7F6F2; color: #0E0E10; display: flex; align-items: center; overflow: hidden;
+    font-size: 2.6vmin; font-weight: 700; white-space: nowrap;
+  }
+  .ticker-track { display: inline-flex; gap: 6vmin; padding-left: 100%; animation: scroll 22s linear infinite; }
+  @keyframes scroll { to { transform: translateX(-100%); } }
+
+  .clock {
+    position: absolute; top: 3vmin; left: 3vmin;
+    background: rgba(14,14,16,0.75); border-radius: 1.5vmin; padding: 1vmin 1.8vmin;
+    font-family: ui-monospace, Menlo, monospace; font-size: 2.2vmin; color: #C9C8C1;
+  }
+
+  /* Portrait (TikTok / Shorts) : carte centrée plus haut, plus large */
+  @media (orientation: portrait) {
+    .card { left: 3vw; right: 3vw; bottom: auto; top: 55vh; max-width: none; transform: translateY(40vh); }
+    .card.show { transform: translateY(0); }
+    .thumb { width: 18vw; height: 18vw; font-size: 6vw; }
+    .label { font-size: 2.6vw; } .name { font-size: 5.2vw; } .price { font-size: 4.4vw; } .stock { font-size: 3vw; }
+    .badge { font-size: 3.2vw; padding: 1.6vw 3vw; } .dot { width: 2vw; height: 2vw; }
+    .ticker { height: 6vh; font-size: 3.4vw; }
+    .clock { font-size: 3vw; }
+  }
+</style>
+</head>
+<body>
+  <div class="clock" id="clock">--:--:--</div>
+
+  <div class="badge"><span class="dot"></span><span>Shop live · test overlay</span></div>
+
+  <div class="card" id="card">
+    <div class="thumb" id="thumb">HO</div>
+    <div class="info">
+      <span class="label">EN VENTE MAINTENANT</span>
+      <span class="name" id="name">Hoodie Nova — Noir</span>
+      <span class="price" id="price">59,00 €</span>
+      <span class="stock" id="stock">Plus que 42 en stock</span>
+    </div>
+  </div>
+
+  <div class="ticker"><div class="ticker-track">
+    <span>DROP D'AUTOMNE</span><span>Hoodie Nova — 59 €</span><span>Casquette brodée — 29 €</span><span>Pin collector — 12 €</span><span>T-shirt Tour — 32 €</span>
+  </div></div>
+
+<script>
+  var params = new URLSearchParams(location.search);
+  if (params.get('debug') === '1') document.body.classList.add('debug');
+
+  var products = [
+    { i: 'HO', n: 'Hoodie Nova — Noir', p: '59,00 €', s: 'Plus que 42 en stock', c: '#3A3A43' },
+    { i: 'CA', n: 'Casquette brodée', p: '29,00 €', s: 'Plus que 18 en stock', c: '#5C5B57' },
+    { i: 'PI', n: 'Pin collector', p: '12,00 €', s: 'Édition limitée', c: '#26262D' },
+    { i: 'TS', n: 'T-shirt Tour', p: '32,00 €', s: 'Plus que 65 en stock', c: '#8E8D87' }
+  ];
+  var idx = 0;
+  var card = document.getElementById('card');
+
+  function render(p) {
+    document.getElementById('thumb').textContent = p.i;
+    document.getElementById('thumb').style.background = p.c;
+    document.getElementById('name').textContent = p.n;
+    document.getElementById('price').textContent = p.p;
+    document.getElementById('stock').textContent = p.s;
+  }
+
+  function cycle() {
+    card.classList.remove('show');
+    setTimeout(function () {
+      render(products[idx]);
+      idx = (idx + 1) % products.length;
+      card.classList.add('show');
+    }, 700);
+  }
+
+  function tick() {
+    var d = new Date();
+    var pad = function (x) { return (x < 10 ? '0' : '') + x; };
+    document.getElementById('clock').textContent =
+      pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + ' · ' + window.innerWidth + '×' + window.innerHeight;
+  }
+
+  cycle();
+  setInterval(cycle, 8000);
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
